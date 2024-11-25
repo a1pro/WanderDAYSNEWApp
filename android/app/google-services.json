@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "676183804323",
+    "project_id": "wanderdays-d1f8f",
+    "storage_bucket": "wanderdays-d1f8f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:676183804323:android:3ad20893d6c500bfc7b216",
+        "android_client_info": {
+          "package_name": "com.wanderdays"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "676183804323-ra5ouqreplc19p9gmc2h927jvm03rg9r.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wanderdays",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "676183804323-omsrv37bqtctsjbl091n8isi2jojepd9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB4kFW2PbJpo3hEvWAD42lT72xVOEpcETQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "676183804323-omsrv37bqtctsjbl091n8isi2jojepd9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
