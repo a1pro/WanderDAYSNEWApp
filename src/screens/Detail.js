@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, SafeAreaView, Image, FlatList, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, SafeAreaView, Image, FlatList, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, ImageBackground } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/AntDesign';
 import Headerscreen from '../component/Headerscreen';
@@ -39,7 +39,7 @@ const Detail = () => {
   const renderVideoItem = ({ item }) => (
     <TouchableOpacity
       onPress={() => {
-        navigation.navigate('VideoPlayer', { videoUrl: item.videoUrl }); // Pass video URL to the player
+        navigation.navigate('VideoPlayer', { videoUrl: item.videoUrl });
       }}
     >
       <View style={styles.videoContainer}>
@@ -85,6 +85,9 @@ const Detail = () => {
         </View>
 
         {/* Trips Section */}
+        <ImageBackground
+    source={require('../assets/oldback.png')} // Replace with your uploaded image path
+    style={styles.backgroundImage}>
         {countryData?.trips.map((trip, index) => (
           <View key={index} style={styles.tripCard}>
             {/* Trip Dates */}
@@ -93,7 +96,7 @@ const Detail = () => {
             </Text>
 
             {/* Photos Section */}
-            <Text style={styles.sectionTitle}>Photos</Text>
+            <Text style={styles.sectionTitle}>Tour Images</Text>
             {loadingImages ? (
               <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
             ) : getTourImages(trip.startDate, trip.endDate).length > 0 ? (
@@ -110,7 +113,7 @@ const Detail = () => {
             )}
 
             {/* Videos Section */}
-            <Text style={styles.sectionTitle}>Videos</Text>
+            <Text style={styles.sectionTitle}>Tour Videos</Text>
             {loadingVideos ? (
               <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
             ) : getVideosWithThumbnails(trip).length > 0 ? (
@@ -127,6 +130,7 @@ const Detail = () => {
             )}
           </View>
         ))}
+        </ImageBackground>
       </ScrollView>
     </SafeAreaView>
   );
@@ -152,15 +156,28 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   tripCard: {
-    margin: 20,
-    padding: 15,
-    backgroundColor: '#89D0F6',
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+    // margin: 20,
+    // padding: 15,
+    // backgroundColor: '#89D0F6',
+    // borderRadius: 10,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 4 },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 5,
+    // elevation: 3,
+  },
+  backgroundImage: {
+    // flex: 1,
+    margin:20,
+    padding:20,
+    resizeMode: 'cover',
+    opacity:1,
+    borderRadius: 20,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height:1 },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 5,
+    // elevation: 1,
   },
   trip: {
     fontSize: 16,
@@ -172,7 +189,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
     marginBottom: 10,
   },
   flatList: {
@@ -213,7 +230,7 @@ const styles = StyleSheet.create({
   },
   noContentText: {
     fontSize: 16,
-    color: '#999',
+    color: '#fff',
     textAlign: 'center',
     marginVertical: 20,
   },

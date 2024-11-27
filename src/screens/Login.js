@@ -82,7 +82,7 @@ const Login = () => {
                 Alert.alert('Error', 'Failed to save login session.');
               });
           } else {
-            Alert.alert('Login failed', 'No token received from the server.');
+            Alert.alert('Login failed', 'Invalid credentials');
           }
         })
         .catch(error => {

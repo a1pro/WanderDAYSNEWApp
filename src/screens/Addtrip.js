@@ -109,36 +109,40 @@ const Addtrip = () => {
     } else {
       if (response.assets && response.assets.length > 0) {
         const selectedAssets = response.assets;
-  
+
         // Handle images
-        const newImages = selectedAssets.filter(asset => asset.type.includes('image')).map(asset => ({
-          uri: asset.uri,
-          name: asset.fileName || 'file.jpg',
-          type: asset.type || 'image/jpeg',
-          fileSize: asset.fileSize,
-          width: asset.width,
-          height: asset.height,
-          originalPath: asset.originalPath || asset.uri,
-        }));
-  
+        const newImages = selectedAssets
+          .filter((asset) => asset.type.includes('image'))
+          .map((asset) => ({
+            uri: asset.uri,
+            name: asset.fileName || 'file.jpg',
+            type: asset.type || 'image/jpeg',
+            fileSize: asset.fileSize,
+            width: asset.width,
+            height: asset.height,
+            originalPath: asset.originalPath || asset.uri,
+          }));
+
         setImageFiles((prevFiles) => {
           const updatedFiles = [...prevFiles, ...newImages];
           if (updatedFiles.length > 5) {
             Alert.alert('Limit Reached', 'You can select a maximum of 5 images.');
             return updatedFiles.slice(0, 5); // Trim the array to 5 images
+           
           }
+          console.log('dataupdatedarray',updatedFiles)
           return updatedFiles;
         });
-  
+
         // Handle video
-        const videoAsset = selectedAssets.find(asset => asset.type.includes('video'));
+        const videoAsset = selectedAssets.find((asset) => asset.type.includes('video'));
         if (videoAsset) {
           setVideoFile({
             uri: videoAsset.uri,
             name: videoAsset.fileName || 'file.mp4',
             type: videoAsset.type || 'video/mp4',
           });
-  
+
           // Generate video thumbnail
           try {
             const thumbnail = await createThumbnail({ url: videoAsset.uri });
@@ -148,11 +152,10 @@ const Addtrip = () => {
             console.log('Error generating video thumbnail:', err);
           }
         }
-  
-        console.log('Selected media details:', selectedAssets);
       }
     }
   };
+
   
   
 
@@ -202,52 +205,53 @@ const Addtrip = () => {
       Alert.alert("Error", "Please select both Date In and Date Out");
       return;
     }
-
+  
     setIsLoading(true);
-
+  
     const formData = new FormData();
     formData.append('date_in', moment(dateIn).format('DD/MM/YYYY'));
     formData.append('date_out', moment(dateOut).format('DD/MM/YYYY'));
     formData.append('day_spend', totalDays.toString());
-    formData.append('country_name', country.country_name);  // Pass country name
+    formData.append('country_name', country.country_name); // Pass country name
     formData.append('country_short_code', country.iso2);   // Pass country short code
-
+  
     // Append multiple images
-    imageFiles.forEach((imageFile) => {
-      formData.append('photos', {
-        uri: imageFile.uri,
-        name: imageFile.name,
-        type: imageFile.type,
+    imageFiles.forEach((image, index) => {
+      formData.append('photos[]', {
+        uri: image.uri.startsWith('file://') ? image.uri : `file://${image.uri}`,
+        name: image.name || `photo_${index}.jpg`,
+        type: image.type || 'image/jpeg',
       });
     });
-
-    // Append single video
+  
+    // Append single video (if any)
     if (videoFile) {
       formData.append('videos', {
-        uri: videoFile.uri,
-        name: videoFile.name,
-        type: videoFile.type,
+        uri: videoFile.uri.startsWith('file://') ? videoFile.uri : `file://${videoFile.uri}`,
+        name: videoFile.name || 'video.mp4',
+        type: videoFile.type || 'video/mp4',
       });
-
+  
+      // Append video thumbnail (if any)
       if (videoThumbnail) {
-        formData.append('videothubmnail', {
+        formData.append('videothumbnail', {
           uri: videoThumbnail.startsWith('file://') ? videoThumbnail : `file://${videoThumbnail}`,
           name: 'thumbnail.jpg',
           type: 'image/jpeg',
         });
       }
     }
-
+  
     try {
       console.log('Sending form data:', formData);
-      const action = await dispatch(addTour(formData));
+      const action = await dispatch(addTour(formData)); // Use your Redux action for API submission
       console.log('Dispatch action result:', action);
-
+  
       if (action.payload && action.payload.data && action.payload.data.message) {
         Alert.alert("Success", action.payload.data.message || 'Tour added successfully!');
         navigation.goBack();
       } else {
-        Alert.alert("Error", 'Failed to add tour!');
+        Alert.alert("Error", action.payload || 'Failed to add tour!');
       }
     } catch (error) {
       console.error("Error adding tour:", error);
@@ -256,6 +260,7 @@ const Addtrip = () => {
       setIsLoading(false);
     }
   };
+  
   
   
   
