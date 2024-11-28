@@ -7,6 +7,7 @@ import  setNewPasswordReducer  from '../slice/setNewPasswordSlice';
 import  addTourReducer  from '../slice/addTourSlice';
 import  getTourDetailReducer  from '../slice/getTourDetail';
 import  getuserdetailReducer from '../slice/getuserdetail';
+import  updateProfileReducer  from '../slice/updateProfile';
 
 
 
@@ -19,7 +20,8 @@ const store = configureStore({
     setNewPassword: setNewPasswordReducer,
     addTour:addTourReducer,
     getTourDetail:getTourDetailReducer,
-    getuserdetail:getuserdetailReducer
+    getuserdetail:getuserdetailReducer,
+    updateProfile:updateProfileReducer
 
     
 

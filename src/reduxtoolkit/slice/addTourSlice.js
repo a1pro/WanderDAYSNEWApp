@@ -20,7 +20,7 @@ export const addTour = createAsyncThunk(
         },
       });
 
-      return response.data; // Assuming response includes a message or success status
+      return response.data; 
     } catch (error) {
       if (error.response) {
         if (error.response.status === 401) {

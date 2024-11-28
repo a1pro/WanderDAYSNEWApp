@@ -71,14 +71,22 @@ const Profile = () => {
           text: 'OK',
           onPress: async () => {
             try {
+              // Retrieve the login method from AsyncStorage
               const loginMethod = await AsyncStorage.getItem('loginMethod');
               if (loginMethod === 'google') {
-                await GoogleSignin.signOut();
+                console.log('Logging out from Google...');
+                await GoogleSignin.signOut(); // Sign out from Google
               }
-              await AsyncStorage.clear();
+              
+              console.log('Clearing AsyncStorage...');
+              await AsyncStorage.clear(); // Clear AsyncStorage
+              
+              // Reset the navigation stack and navigate to the Login screen
               navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+              console.log('Logged out successfully!');
             } catch (error) {
-              Alert.alert('Logout Error', 'Something went wrong while logging out.');
+              console.error('Error during logout:', error);
+              Alert.alert('Logout Error', 'Something went wrong while logging out. ' + error.message);
             }
           },
         },
@@ -86,6 +94,7 @@ const Profile = () => {
       { cancelable: false }
     );
   };
+  
 
   const handleEditProfileImage = () => {
     Alert.alert(

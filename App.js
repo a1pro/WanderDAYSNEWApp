@@ -14,21 +14,43 @@ const App = () => {
   const requestPermissions = async () => {
     try {
       if (Platform.OS === 'android') {
-        const permissionGranted = await PermissionsAndroid.request(
+       
+        const locationPermissionGranted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          {
+            title: 'Location Permission',
+            message:
+              'This app needs access to your location to show your current country or location-based features.',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          }
+        );
+  
+        if (locationPermissionGranted === PermissionsAndroid.RESULTS.GRANTED) {
+          console.log('Location permission granted');
+        } else {
+          console.log('Location permission denied');
+        }
+  
+        // Request notification permissions
+        const notificationPermissionGranted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
         );
-        if (permissionGranted === PermissionsAndroid.RESULTS.GRANTED) {
+  
+        if (notificationPermissionGranted === PermissionsAndroid.RESULTS.GRANTED) {
           console.log('Notification permission granted');
         } else {
           console.log('Notification permission denied');
         }
       }
-
+  
+      // Request notification permissions for iOS
       const authStatus = await messaging().requestPermission();
       const enabled =
         authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
         authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
+  
       if (enabled) {
         console.log('Notification permission granted:', authStatus);
       } else {
@@ -38,6 +60,7 @@ const App = () => {
       console.error('Permission request failed:', error);
     }
   };
+  
 
   // Get Firebase Cloud Messaging (FCM) token and save it in AsyncStorage
   const getDeviceToken = async () => {

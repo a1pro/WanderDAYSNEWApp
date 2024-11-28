@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, SafeAreaView, TouchableOpacity, TextInput, Image, Alert, ScrollView, StyleSheet, ImageBackground } from 'react-native';
+import { View, Text, SafeAreaView, Modal,TouchableOpacity, TextInput, Image, Alert, ScrollView, StyleSheet, ImageBackground, FlatList } from 'react-native';
 import { styles } from './Style';
 import Icon from 'react-native-vector-icons/AntDesign';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import moment from 'moment';
-import DropDownPicker from 'react-native-dropdown-picker';
 import { useNavigation } from '@react-navigation/native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { useDispatch, useSelector } from 'react-redux';
 import { addTour } from '../reduxtoolkit/slice/addTourSlice'; // Import your action
 import Headerscreen from '../component/Headerscreen';
 import axios from 'axios';  // For making API requests
-import { SvgUri } from 'react-native-svg';  // Import SvgUri for displaying country flags
+import { SvgUri } from 'react-native-svg'; 
 import { createThumbnail } from 'react-native-create-thumbnail';
 
 const Addtrip = () => {
@@ -19,20 +18,21 @@ const Addtrip = () => {
   const navigation = useNavigation();
   const { loading, success, error, message } = useSelector(state => state.addTour);
 
-  const [imageFiles, setImageFiles] = useState([]);  // For multiple image files
+  const [imageFiles, setImageFiles] = useState([]); 
   const [videoFile, setVideoFile] = useState(null);
-  const [videoThumbnail, setVideoThumbnail] = useState(null);  // For a single video file
+  const [videoThumbnail, setVideoThumbnail] = useState(null); 
   const [dateIn, setDateIn] = useState(null);
   const [dateOut, setDateOut] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); // To manage loading state
+  const [isLoading, setIsLoading] = useState(false); 
   const [totalDays, setTotalDays] = useState(0);
   const [isDateInPickerVisible, setDateInPickerVisibility] = useState(false);
   const [isDateOutPickerVisible, setDateOutPickerVisibility] = useState(false);
   const [country, setCountry] = useState(null);
-  const [countries, setCountries] = useState([]);  // For storing country data from API
-  const [open, setOpen] = useState(false); // Controls the dropdown visibility
-  const [value, setValue] = useState(null); // Stores the selected country value
-  const [items, setItems] = useState([]);
+  const [countries, setCountries] = useState([]);  
+  const [modalVisible, setModalVisible] = useState(false); // Controls the modal visibility
+  const [searchQuery, setSearchQuery] = useState('');
+ 
+ 
 
 
   const showDateInPicker = () => setDateInPickerVisibility(true);
@@ -75,7 +75,7 @@ const Addtrip = () => {
     }
   };
 
-  // Function to handle image and video selection
+  
   const handleMediaSelection = (mediaType) => {
     Alert.alert(
       "Select Option",
@@ -88,7 +88,7 @@ const Addtrip = () => {
         {
           text: "Gallery",
           onPress: () => launchImageLibrary(
-            { mediaType, selectionLimit: 0 }, // Allow multiple selection
+            { mediaType, selectionLimit: 0 }, 
             (response) => handleMediaResponse(response)
           ),
         },
@@ -97,10 +97,37 @@ const Addtrip = () => {
     );
   };
 
+  const handleSearch = (text) => {
+    setSearchQuery(text);
+  };
 
+  const filteredCountries = countries.filter(country =>
+    country.country_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const renderCountryItem = ({ item }) => (
+    <TouchableOpacity
+      style={STYLES.countryItem}
+      onPress={() => {
+        setIsLoading(true); // Show loading indicator while selecting country
+        setCountry(item);
+        setModalVisible(false);
+        setIsLoading(false); // Hide indicator after selection
+      }}
+    >
+      <View style={STYLES.countryView}>
+        {item.flag_url ? (
+          <SvgUri uri={item.flag_url} width={30} height={20} /> // If SVG URL is available
+        ) : (
+          <Image source={{ uri: item.flag_url }} style={STYLES.flagImage} /> // Fallback to Image for other flag formats
+        )}
+        <Text style={STYLES.countryText}>{item.country_name}</Text>
+      </View>
+    </TouchableOpacity>
+  );
 
   
-  // Handle the media response (image/video selected)
+ 
   const handleMediaResponse = async (response) => {
     if (response.didCancel) {
       console.log('User cancelled media picker');
@@ -109,40 +136,36 @@ const Addtrip = () => {
     } else {
       if (response.assets && response.assets.length > 0) {
         const selectedAssets = response.assets;
-
+  
         // Handle images
-        const newImages = selectedAssets
-          .filter((asset) => asset.type.includes('image'))
-          .map((asset) => ({
-            uri: asset.uri,
-            name: asset.fileName || 'file.jpg',
-            type: asset.type || 'image/jpeg',
-            fileSize: asset.fileSize,
-            width: asset.width,
-            height: asset.height,
-            originalPath: asset.originalPath || asset.uri,
-          }));
-
+        const newImages = selectedAssets.filter(asset => asset.type.includes('image')).map(asset => ({
+          uri: asset.uri,
+          name: asset.fileName || 'file.jpg',
+          type: asset.type || 'image/jpeg',
+          fileSize: asset.fileSize,
+          width: asset.width,
+          height: asset.height,
+          originalPath: asset.originalPath || asset.uri,
+        }));
+  
         setImageFiles((prevFiles) => {
           const updatedFiles = [...prevFiles, ...newImages];
           if (updatedFiles.length > 5) {
             Alert.alert('Limit Reached', 'You can select a maximum of 5 images.');
             return updatedFiles.slice(0, 5); // Trim the array to 5 images
-           
           }
-          console.log('dataupdatedarray',updatedFiles)
           return updatedFiles;
         });
-
+  
         // Handle video
-        const videoAsset = selectedAssets.find((asset) => asset.type.includes('video'));
+        const videoAsset = selectedAssets.find(asset => asset.type.includes('video'));
         if (videoAsset) {
           setVideoFile({
             uri: videoAsset.uri,
             name: videoAsset.fileName || 'file.mp4',
             type: videoAsset.type || 'video/mp4',
           });
-
+  
           // Generate video thumbnail
           try {
             const thumbnail = await createThumbnail({ url: videoAsset.uri });
@@ -152,6 +175,8 @@ const Addtrip = () => {
             console.log('Error generating video thumbnail:', err);
           }
         }
+  
+        console.log('Selected media details:', selectedAssets);
       }
     }
   };
@@ -160,27 +185,22 @@ const Addtrip = () => {
   
 
 
-  // Remove selected image by index
+  
   const handleImageRemove = (index) => {
     setImageFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
   };
 
-  // Remove selected video
+ 
   const handleVideoRemove = () => {
     setVideoFile(null);
   };
 
-  // Fetch country data from the API
+  
   const fetchCountries = async () => {
     try {
       const response = await axios.get('https://visatravel.a1professionals.net/api/v1/auth/countries-with-flags');
       if (response.data.success) {
-        const formattedCountries = response.data.data.map((country) => ({
-          label: `${country.country_name} `, // Display name
-          value: country, // Store the entire country object
-          icon: () => <SvgUri width={30} height={20} uri={country.flag_url} />, // Display flag
-        }));
-        setItems(formattedCountries);
+        setCountries(response.data.data); // Set the country data to the state
       } else {
         Alert.alert('Error', 'Failed to fetch countries');
       }
@@ -190,12 +210,11 @@ const Addtrip = () => {
     }
   };
 
-
   useEffect(() => {
     fetchCountries();  // Fetch countries when the screen is loaded
   }, []);
 
-  // API call function to submit the form data via Redux action
+
   const handleSave = async () => {
     if (!country) {
       Alert.alert("Error", "Please select a country");
@@ -212,8 +231,8 @@ const Addtrip = () => {
     formData.append('date_in', moment(dateIn).format('DD/MM/YYYY'));
     formData.append('date_out', moment(dateOut).format('DD/MM/YYYY'));
     formData.append('day_spend', totalDays.toString());
-    formData.append('country_name', country.country_name); // Pass country name
-    formData.append('country_short_code', country.iso2);   // Pass country short code
+    formData.append('country_name', country.country_name);
+    formData.append('country_short_code', country.iso2);   
   
     // Append multiple images
     imageFiles.forEach((image, index) => {
@@ -232,9 +251,9 @@ const Addtrip = () => {
         type: videoFile.type || 'video/mp4',
       });
   
-      // Append video thumbnail (if any)
+      
       if (videoThumbnail) {
-        formData.append('videothumbnail', {
+        formData.append('videothubmnail', {
           uri: videoThumbnail.startsWith('file://') ? videoThumbnail : `file://${videoThumbnail}`,
           name: 'thumbnail.jpg',
           type: 'image/jpeg',
@@ -276,34 +295,42 @@ const Addtrip = () => {
         <Headerscreen showBackButton={true} onBackPress={() => navigation.goBack()}/>
 
        
-        <View style={STYLES.container}>
-            <DropDownPicker
-              open={open}
-              value={value}
-              items={items}
-              setOpen={setOpen}
-              setValue={setValue}
-              setItems={setItems}
-              placeholder="Select Country"
-              style={{
-                backgroundColor: "#E5E1E1",
-                borderRadius: 10,
-              }}
-              dropDownContainerStyle={{
-                backgroundColor: "#ffffff",
-              }}
-              listItemContainerStyle={{
-                flexDirection: 'row',
-                alignItems: 'center',
-              }}
-              listItemLabelStyle={{
-                marginLeft: 10,
-              }}
-              onChangeValue={(selectedValue) => {
-                setCountry(selectedValue);  // Store the selected country object
-              }}
-            />
-          </View>
+        <TouchableOpacity onPress={() => setModalVisible(true)} style={STYLES.selectCountryBtn}>
+            <Text style={STYLES.selectCountryText}>
+              {country ? country.country_name : 'Select Country'}
+            </Text>
+            {country && (
+              <SvgUri uri={country.flag_url} width={30} height={20} style={STYLES.flagImage} />
+            )}
+          </TouchableOpacity>
+
+          {/* Modal for country selection */}
+          <Modal
+            visible={modalVisible}
+            animationType="slide"
+            transparent={true}
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View style={STYLES.modalOverlay}>
+              <View style={STYLES.modalContainer}>
+                <TextInput
+                  style={STYLES.searchBar}
+                  placeholder="Search for a country"
+                  value={searchQuery}
+                  onChangeText={handleSearch}
+                  placeholderTextColor="#999"
+                />
+                {/* FlatList for filtered countries */}
+                <FlatList
+                  data={filteredCountries}
+                  keyExtractor={(item, index) => item.country_name + index} // Ensure unique keys
+                  renderItem={renderCountryItem}
+                  style={STYLES.countryList}
+                />
+              </View>
+            </View>
+          </Modal>
+
 
         {/* Date In and Date Out Picker */}
         <TouchableOpacity onPress={showDateInPicker}>
@@ -436,10 +463,66 @@ const STYLES=StyleSheet.create({
     borderRadius: 12,
     padding: 10,
   }, 
+  selectCountryBtn: {
+    padding: 15,
+    backgroundColor: '#E5E1E1',
+    borderRadius: 10,
+    marginTop: 30,
+    width: "80%",
+    alignSelf:"center",
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  selectCountryText: {
+    fontSize: 16,
+    color: '#000',
+  },
+  flagImage: {
+    width: 30,
+    height: 20,
+    marginLeft: 10,
+  },
   container: {
     alignSelf: 'center',
     width: '80%',
     marginTop: 30,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    width: '90%',
+    height: '60%',
+  },
+  searchBar: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 10,
+    fontSize: 16,
+  },
+  countryList: {
+    marginTop: 20,
+  },
+  countryItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  countryView: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  countryText: {
+    fontSize: 16,
   },
  
 })

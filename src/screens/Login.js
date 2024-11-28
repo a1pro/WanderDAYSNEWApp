@@ -1,25 +1,13 @@
-import {
-  View,
-  Text,
-  SafeAreaView,
-  TextInput,
-  TouchableOpacity,
-  Image,
-  Alert,
-  ScrollView,
-} from 'react-native';
 import React, { useEffect, useState } from 'react';
-import { styles } from './Style';
+import { SafeAreaView,View, ScrollView, Text, TextInput, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { loginuser } from '../reduxtoolkit/slice/loginuser';
-import {
-  GoogleSignin,
-  statusCodes,
-} from '@react-native-google-signin/google-signin';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Headerscreen from '../component/Headerscreen';
+import { styles } from './Style'; // assuming styles are defined in the Style file
 import axios from 'axios';
 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -30,10 +18,37 @@ const Login = () => {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const [userInfo, setUserInfo] = useState(null);
 
+  useEffect(() => {
+    // Check if a token exists in AsyncStorage when the screen loads
+    const checkToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        if (token) {
+          // If token exists, navigate to home screen (BottomTab)
+          navigation.reset({ index: 0, routes: [{ name: 'BottomTab' }] });
+        }
+      } catch (error) {
+        console.error('Error checking token:', error);
+      }
+    };
+
+    checkToken(); // Check for token on component mount
+  }, [navigation]); // Only run this effect on mount
+
+
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId:
+        '676183804323-omsrv37bqtctsjbl091n8isi2jojepd9.apps.googleusercontent.com',
+        offlineAccess: true, 
+    hostedDomain: '', 
+    forceCodeForRefreshToken: true,
+    });
+  }, []);
   const validateForm = () => {
     let isValid = true;
 
@@ -60,11 +75,9 @@ const Login = () => {
     return isValid;
   };
 
-  // Check if token exists and navigate to BottomTab if token is present
- 
-
   const handleLogin = () => {
     if (validateForm()) {
+      setLoading(true); // Show loading indicator
       dispatch(loginuser({ email, password }))
         .unwrap()
         .then(response => {
@@ -74,18 +87,22 @@ const Login = () => {
           if (token) {
             AsyncStorage.setItem('token', token)
               .then(() => {
+                setLoading(false); // Hide loading indicator
                 Alert.alert('Success', 'Login successful!');
-                navigation.reset({ index: 0, routes: [{ name: 'BottomTab' }] });
+                navigation.reset({ index: 0, routes: [{ name: 'BottomTab' }] }); // Navigate to BottomTab (Home)
               })
               .catch(error => {
                 console.error('Error saving token:', error);
+                setLoading(false); // Hide loading indicator
                 Alert.alert('Error', 'Failed to save login session.');
               });
           } else {
+            setLoading(false); // Hide loading indicator
             Alert.alert('Login failed', 'Invalid credentials');
           }
         })
         .catch(error => {
+          setLoading(false); // Hide loading indicator
           console.error('Login failed:', error);
           Alert.alert(
             'Login failed',
@@ -95,24 +112,12 @@ const Login = () => {
     }
   };
 
-  useEffect(() => {
-    GoogleSignin.configure({
-      webClientId:
-        '676183804323-omsrv37bqtctsjbl091n8isi2jojepd9.apps.googleusercontent.com',
-    });
-  }, []);
-
-  // login with googleSignin
   const signIn = async () => {
     console.log('Initiating Google Sign-In');
     await AsyncStorage.setItem('loginMethod', 'google');
     try {
-      // Checking if Google Play Services are available
       await GoogleSignin.hasPlayServices();
-
-      // Signing in the user
       const userInfo = await GoogleSignin.signIn();
-      setUserInfo(userInfo);
       console.log('id', userInfo.data.user.id);
 
       if (userInfo) {
@@ -125,25 +130,14 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Google Sign-In Error:', error);
-
-      // Handling different error codes
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        Alert.alert(
-          'Sign-In Cancelled',
-          'You have cancelled the sign-in process'
-        );
+        Alert.alert('Sign-In Cancelled', 'You have cancelled the sign-in process');
       } else if (error.code === statusCodes.IN_PROGRESS) {
         Alert.alert('Sign-In In Progress', 'Sign-In is already in progress');
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        Alert.alert(
-          'Play Services Error',
-          'Google Play services are not available or outdated'
-        );
+        Alert.alert('Play Services Error', 'Google Play services are not available or outdated');
       } else {
-        Alert.alert(
-          'Error',
-          error.message || 'Something went wrong during sign-in'
-        );
+        Alert.alert('Error', error.message || 'Something went wrong during sign-in');
       }
     }
   };
@@ -173,23 +167,7 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Social login error:', error);
-
-      if (error.response) {
-        console.log('Error response from server:', error.response.data);
-        Alert.alert(
-          'Error',
-          `Server error: ${error.response.data.message || 'Unknown error'}`
-        );
-      } else if (error.request) {
-        console.log('Error request:', error.request);
-        Alert.alert(
-          'Error',
-          'No response from the server. Please check your network.'
-        );
-      } else {
-        console.log('General error:', error.message);
-        Alert.alert('Error', `An error occurred: ${error.message}`);
-      }
+      Alert.alert('Error', error.message || 'An error occurred during social login');
     }
   };
 
@@ -198,16 +176,9 @@ const Login = () => {
       <ScrollView>
         <Headerscreen imageTintColor="#FFFFFF" textColor="#FFFFFF" />
 
+        {/* Login Form */}
         <View style={styles.view1}>
-          <Text
-            style={{
-              fontSize: 20,
-              fontWeight: 'bold',
-              color: '#ffff',
-              textAlign: 'center',
-              marginBottom: 50,
-            }}
-          >
+          <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#ffff', textAlign: 'center', marginBottom: 50 }}>
             Login
           </Text>
 
@@ -220,82 +191,41 @@ const Login = () => {
             value={email}
             onChangeText={text => setEmail(text)}
           />
-          {emailError ? (
-            <Text style={{ color: 'red', paddingLeft: 30, marginBottom: 5 }}>
-              {emailError}
-            </Text>
-          ) : null}
+          {emailError && <Text style={{ color: 'red', paddingLeft: 30, marginBottom: 5 }}>{emailError}</Text>}
+
           <View style={{ marginTop: 10 }}>
             <Text style={[styles.txt, { paddingLeft: 20 }]}>Your Password</Text>
             <View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: '#ffff',
-                  color: '#000',
-                  borderRadius: 10,
-                  paddingLeft: 15,
-                  paddingRight: 15,
-                  paddingTop: 5,
-                  paddingBottom: 5,
-                  width: '90%',
-                  alignSelf: 'center',
-                  marginBottom: 10,
-                }}
-              >
+              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#ffff', color: '#000', borderRadius: 10, paddingLeft: 15, paddingRight: 15, paddingTop: 5, paddingBottom: 5, width: '90%', alignSelf: 'center', marginBottom: 10 }}>
                 <TextInput
                   placeholder="Password"
                   secureTextEntry={!showPassword}
                   placeholderTextColor="#000"
-                  style={{
-                    flex: 1,
-                    borderWidth: 0,
-                    paddingLeft: 0,
-                    marginTop: 0,
-                  }}
+                  style={{ flex: 1, borderWidth: 0, paddingLeft: 0, marginTop: 0 }}
                   onChangeText={text => setPassword(text)}
                   value={password}
                 />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={{ marginRight: 10 }}
-                >
-                  <Icon
-                    name={showPassword ? 'visibility' : 'visibility-off'}
-                    size={30}
-                  />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ marginRight: 10 }}>
+                  <Icon name={showPassword ? 'visibility' : 'visibility-off'} size={30} />
                 </TouchableOpacity>
               </View>
-              {passwordError ? (
-                <Text style={{ color: 'red', paddingLeft: 30, marginBottom: 5 }}>
-                  {passwordError}
-                </Text>
-              ) : null}
+              {passwordError && <Text style={{ color: 'red', paddingLeft: 30, marginBottom: 5 }}>{passwordError}</Text>}
             </View>
           </View>
-
           <TouchableOpacity onPress={() => navigation.navigate('ForgetPassword')}>
             <Text style={[styles.txt, { textAlign: 'right', marginRight: 20 }]}>
               Forgot Password?
             </Text>
           </TouchableOpacity>
-
+          {/* Login Button */}
           <TouchableOpacity style={styles.btnview} onPress={handleLogin}>
-            <Text style={[styles.txt, { textAlign: 'center' }]}>Login</Text>
+            {loading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={[styles.txt, { textAlign: 'center' }]}>Login</Text>}
           </TouchableOpacity>
-          <Text style={[styles.txt, { textAlign: 'center', marginTop: 20 }]}>
-            or
-          </Text>
 
+          {/* Google Sign-In Button */}
           <TouchableOpacity style={styles.imgview} onPress={signIn}>
-            <Image
-              source={require('../assets/Google.png')}
-              style={styles.img}
-            />
-            <Text style={[styles.txt, { color: '#000' }]}>
-              Continue with Google
-            </Text>
+            <Image source={require('../assets/Google.png')} style={styles.img} />
+            <Text style={[styles.txt, { color: '#000' }]}>Continue with Google</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.imgview, { backgroundColor: '#1673EA' }]}
@@ -309,31 +239,11 @@ const Login = () => {
             </Text>
           </TouchableOpacity>
         </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingTop: 20,
-          }}
-        >
-          <Text
-            style={[
-              styles.txt,
-              {
-                color: '#ffff',
-                fontWeight: '200',
-              },
-            ]}
-          >
-            Don't have an account ?
-          </Text>
-          <Text
-            style={[styles.txt, { color: '#0288D1', paddingLeft: 10 }]}
-            onPress={() => navigation.navigate('Signup')}
-          >
-            Sign up
-          </Text>
+
+        {/* Footer */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingTop: 20 }}>
+          <Text style={[styles.txt, { color: '#ffff', fontWeight: '200' }]}>Don't have an account ?</Text>
+          <Text style={[styles.txt, { color: '#0288D1', paddingLeft: 10 }]} onPress={() => navigation.navigate('Signup')}>Sign up</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
