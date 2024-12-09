@@ -16,6 +16,8 @@ import OtpScreen from '../screens/OtpScreen';
 import NewPassword from '../screens/NewPassword';
 import VideoPlayer from '../screens/VideoPlayer';
 import EditProfile from '../screens/EditProfile';
+import ChatScreen from '../screens/ChatScreen';
+import LeaderBoard from '../screens/LeaderBoard';
 
 const Stack = createStackNavigator();
 
@@ -59,6 +61,9 @@ const StackNavigation = () => {
         <Stack.Screen name="Imageview" component={Imageview} />
         <Stack.Screen name="VideoPlayer" component={VideoPlayer} />
         <Stack.Screen name="EditProfile" component={EditProfile} />
+        <Stack.Screen name="ChatScreen" component={ChatScreen} />
+        <Stack.Screen name="LeaderBoard" component={LeaderBoard} />
+
       </Stack.Navigator>
     </SafeAreaProvider>
   );

@@ -4,7 +4,7 @@ import {
   Text,
   Image,
   StyleSheet,
-  TouchableOpacity,
+  TouchableOpacity, 
   SafeAreaView,
   Alert,
   ActivityIndicator,
@@ -20,44 +20,34 @@ import {
   GoogleSignin,
 } from '@react-native-google-signin/google-signin';
 import Headerscreen from '../component/Headerscreen';
-
+import { LoginManager } from 'react-native-fbsdk-next';
+import { SvgUri } from 'react-native-svg';
 const Profile = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const isFocused = useIsFocused(); // Hook to detect if screen is focused
-  const [bio, setBio] = useState('');
+ 
   const userDetails = useSelector((state) => state.getuserdetail.userdetailsDetails);
+  console.log("userDeails",userDetails);
   const loading = useSelector((state) => state.getuserdetail.loading);
   const error = useSelector((state) => state.getuserdetail.error);
 
   const [profileImage, setProfileImage] = useState(require('../assets/Ellipse.png'));
 
   useEffect(() => {
-    dispatch(getuserdetail());
-  }, [dispatch]);
-
-  // Fetch bio from AsyncStorage whenever the screen is focused
-  useEffect(() => {
-    const fetchBio = async () => {
-      try {
-        const storedBio = await AsyncStorage.getItem('bio');
-        if (storedBio) {
-          setBio(storedBio);
-          console.log('bio', storedBio);
-        }
-      } catch (error) {
-        console.error('Failed to load bio:', error);
-      }
-    };
-
     if (isFocused) {
-      fetchBio();
+      dispatch(getuserdetail());
     }
-  }, [isFocused]);
+  }, [dispatch, isFocused]);
+
+  
+ 
 
   useEffect(() => {
     if (userDetails?.data?.profile_pic) {
       setProfileImage({ uri: userDetails.data.profile_pic });
+    } else {
+      setProfileImage(require('../assets/Ellipse.png')); // Set default image
     }
   }, [userDetails]);
 
@@ -77,7 +67,10 @@ const Profile = () => {
                 console.log('Logging out from Google...');
                 await GoogleSignin.signOut(); // Sign out from Google
               }
-              
+              if (loginMethod === 'facebook') {
+                console.log('Logging out from Facebook...');
+                LoginManager.logOut(); // Log out from Facebook
+              }
               console.log('Clearing AsyncStorage...');
               await AsyncStorage.clear(); // Clear AsyncStorage
               
@@ -86,7 +79,7 @@ const Profile = () => {
               console.log('Logged out successfully!');
             } catch (error) {
               console.error('Error during logout:', error);
-              Alert.alert('Logout Error', 'Something went wrong while logging out. ' + error.message);
+              // Alert.alert('Logout Error', 'Something went wrong while logging out. ' + error.message);
             }
           },
         },
@@ -167,13 +160,13 @@ const Profile = () => {
     );
   }
 
-  if (error) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Error: {error}</Text>
-      </View>
-    );
-  }
+  // if (error) {
+  //   return (
+  //     <View style={styles.errorContainer}>
+  //       <Text style={styles.errorText}>Error: {error}</Text>
+  //     </View>
+  //   );
+  // }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -187,12 +180,16 @@ const Profile = () => {
             <Icon name="camera-alt" size={24} color="#fff" />
           </TouchableOpacity>
         </View>
-        <Text style={styles.username}>{userDetails?.data?.username || 'Username'}</Text>
-        <Text style={styles.email}>{userDetails?.data?.email || 'Email'}</Text>
+        <View style={styles.countryView}>
+          <SvgUri uri={userDetails?.data?.countryFlag} width={30} height={20} />
+          <Text>{userDetails?.data?.country}</Text>
+        </View>
+        <Text style={styles.username}>{userDetails?.data?.username || userDetails?.data?.full_name}</Text>
+        <Text style={styles.email}>{userDetails?.data?.email || ''}</Text>
       </View>
       <View style={{ marginTop: 20, paddingHorizontal: 20 }}>
         <Text style={{ fontSize: 14, color: '#000', fontWeight: "bold" }}>
-          Bio: <Text style={{ fontSize: 14, color: '#555' }}> {bio || 'No bio available'}</Text>
+          Bio: <Text style={{ fontSize: 14, color: '#555' }}> {userDetails?.data?.bio || 'No bio available'}</Text>
         </Text>
       </View>
       <View style={styles.optionsContainer}>
@@ -204,6 +201,10 @@ const Profile = () => {
         <TouchableOpacity style={styles.option} onPress={() => navigation.navigate('EditProfile')}>
           <Icon name="edit-square" size={24} color="#0A387E" />
           <Text style={styles.optionText}>Edit Profile</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.option} onPress={()=>navigation.navigate('LeaderBoard')}>
+          <Image source={require('../assets/leaderboard.png')} style={{height:30,width:30,resizeMode:"contain",tintColor:"#0A387E"}}/>
+          <Text style={styles.optionText}>LeaderBoard</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.option}>
           <Icon name="support-agent" size={24} color="#0A387E" />
@@ -248,6 +249,12 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorText: { color: 'red' },
+  countryView: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop:10,
+    marginBottom:10
+  },
 });
 
 export default Profile;

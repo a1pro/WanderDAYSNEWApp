@@ -4,7 +4,7 @@ import { SvgUri } from 'react-native-svg'; // For SVG flags (if the API provides
 import axios from 'axios';
 import Headerscreen from '../component/Headerscreen';
 import { useDispatch } from 'react-redux';
-import { updated } from '../reduxtoolkit/slice/updateProfile';
+
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Base_URL } from '../component/BaseUrl';

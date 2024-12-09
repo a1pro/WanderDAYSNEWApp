@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, SafeAreaView, TextInput, FlatList, StyleSheet, TouchableOpacity, BackHandler, Alert } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useDispatch, useSelector } from 'react-redux';
-import { getTourDetail } from '../reduxtoolkit/slice/getTourDetail'; // Import the action
+import { getTourDetail } from '../reduxtoolkit/slice/getTourDetail';
 import Headerscreen from '../component/Headerscreen';
 import { SvgUri } from 'react-native-svg';
 import Geolocation from '@react-native-community/geolocation';
@@ -17,14 +17,13 @@ const Home = () => {
   const [searchQuery, setSearchQuery] = useState(''); 
   const [searchResult, setSearchResult] = useState([]);
   const [location, setLocation] = useState(null);
-  const [token, setToken] = useState(null);  // State to store the token
+  const [token, setToken] = useState(null);
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const isFocused = useIsFocused();
 
   const { tourDetails, loading, error } = useSelector((state) => state.getTourDetail);
 
-  // Get the token when the component mounts
   useEffect(() => {
     const fetchToken = async () => {
       const storedToken = await AsyncStorage.getItem('token');
@@ -128,7 +127,7 @@ const Home = () => {
     };
 
     if (isFocused) {
-      dispatch(getTourDetail()); // Fetch tour details when screen is focused
+      dispatch(getTourDetail());
       
       const backHandler = BackHandler.addEventListener(
         'hardwareBackPress',
@@ -140,7 +139,7 @@ const Home = () => {
 
   useEffect(() => {
     if (location) {
-      updateCoordinates(); // Call the API when location is available
+      updateCoordinates();
     }
   }, [location]);
 
@@ -156,7 +155,13 @@ const Home = () => {
 
   const renderItem = ({ item }) => {
     const isExpanded = expandedTrips[item.id];
-    const currentTrip = item.trips[0];
+    
+    // Calculate total days for all trips in the country
+    const totalDays = item.trips.reduce((sum, trip) => {
+      // Assuming the 'days' is a string like '8 Days' and you need to extract the numeric part
+      const days = parseInt(trip.days);
+      return sum + (isNaN(days) ? 0 : days); 
+    }, 0);
   
     return (
       <TouchableOpacity onPress={() => navigation.navigate('Detail', { countryData: item, videoThumbnails: item.trips[0]?.videoThumbnails })}>
@@ -170,27 +175,21 @@ const Home = () => {
           <View style={{ flex: 1, marginLeft: 10 }}>
             <View style={style.rowBetween}>
               <Text style={style.country}>{item.country}</Text>
-              {/* Replaced days with total trips */}
               <Text style={style.days}>{item.trips.length} Tours</Text>
             </View>
   
-            <View style={style.rowBetween}>
-              <Text style={style.dates}>{currentTrip.startDate} - {currentTrip.endDate}</Text>
-              {item.trips.length > 1 && (
-                <TouchableOpacity onPress={() => setExpandedTrips({ ...expandedTrips, [item.id]: !isExpanded })}>
-                  <Text style={style.moreTrips}>{isExpanded ? 'Show Less' : 'more...'}</Text>
-                </TouchableOpacity>
-              )}
+            <View style={[style.rowBetween,{justifyContent:'flex-end'}]}>
+              {/* Show total days spent for all trips */}
+              <Text style={[style.dates, { marginTop: 10,fontWeight:'600'}]}>
+                Total Spent: {totalDays} Days
+              </Text>
             </View>
-  
-            {isExpanded && item.trips.slice(1).map((trip, index) => (
-              <Text key={index} style={style.dates}>- {trip.startDate} to {trip.endDate} ({trip.days})</Text>
-            ))}
           </View>
         </View>
       </TouchableOpacity>
     );
   };
+  
 
   const transformData = () => {
     const countriesData = Object.keys(tourDetails?.tours || {}).map(countryKey => {
@@ -205,7 +204,7 @@ const Home = () => {
           days: `${tour.day_spend} Days`,
           images: tour.images,
           videos: tour.videos,
-          videoThumbnails: tour.videothumnail 
+          videoThumbnails: tour.videothumnail
         })),
       };
       return countryData;
@@ -214,13 +213,13 @@ const Home = () => {
   };
 
   const noTours = Object.keys(tourDetails?.tours || {}).length === 0;
-  const noResults = searchResult.length === 0 && searchQuery.trim() !== ''; // Check if there are no results and search is not empty
+  const noResults = searchResult.length === 0 && searchQuery.trim() !== '';
 
   return (
     <SafeAreaView style={style.container}>
-    <View style={{paddingTop:20}}>
-    <Headerscreen />
-    </View>
+      <View style={{ paddingTop: 20 }}>
+        <Headerscreen />
+      </View>
 
       {/* Search bar */}
       <View style={style.searchContainer}>
@@ -228,7 +227,7 @@ const Home = () => {
           placeholder="Search List"
           style={style.searchInput}
           value={searchQuery}
-          onChangeText={setSearchQuery} // Update search query as the user types
+          onChangeText={setSearchQuery}
         />
         <TouchableOpacity onPress={handleSearch}>
           <Ionicons name="search" size={25} color="#333" />
@@ -268,15 +267,16 @@ const Home = () => {
 
       {/* Add trip button */}
       <View style={style.plusButton}>
-      <TouchableOpacity  onPress={() => navigation.navigate('Addtrip')}>
-        <Ionicons name="add-circle" size={60} color="#002F87" />
-      </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Addtrip')}>
+          <Ionicons name="add-circle" size={60} color="#002F87" />
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 };
 
 export default Home;
+
 
 const style = StyleSheet.create({
   container: {
@@ -346,7 +346,7 @@ const style = StyleSheet.create({
   moreText: {
     fontSize: 16,
     color: '#002F87',
-    textAlign: 'right',
+    textAlign: 'left',
     marginTop: 10,
   },
   plusButton: {

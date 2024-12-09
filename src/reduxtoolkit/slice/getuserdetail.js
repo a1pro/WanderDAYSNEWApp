@@ -16,7 +16,8 @@ export const getuserdetail=createAsyncThunk(
                     Authorization : `Bearer  ${token}`,
                 }
             })
-            return response.data
+            return response.data;
+
         }catch (error) {
             return rejectWithValue(error.response ? error.response.data : error.message)
         }

@@ -53,6 +53,7 @@ const Addtrip = () => {
 
   const handleDateOutConfirm = (event, selectedDate) => {
     const currentDate = selectedDate || dateOut;
+  
     if (dateIn && moment(currentDate).isSame(dateIn, 'day')) {
       alert("Date Out cannot be the same as Date In.");
       return;
@@ -61,7 +62,8 @@ const Addtrip = () => {
       alert("Date Out cannot be before Date In.");
       return;
     }
-    setDateOut(currentDate);
+  
+    setDateOut(currentDate); // Set the valid date_out
     hideDateOutPicker();
     calculateTotalDays(dateIn, currentDate);
   };
