@@ -18,6 +18,7 @@ import VideoPlayer from '../screens/VideoPlayer';
 import EditProfile from '../screens/EditProfile';
 import ChatScreen from '../screens/ChatScreen';
 import LeaderBoard from '../screens/LeaderBoard';
+import LeaderBoarduserDetails from '../screens/LeaderBoardUserDetails';
 
 const Stack = createStackNavigator();
 
@@ -63,6 +64,7 @@ const StackNavigation = () => {
         <Stack.Screen name="EditProfile" component={EditProfile} />
         <Stack.Screen name="ChatScreen" component={ChatScreen} />
         <Stack.Screen name="LeaderBoard" component={LeaderBoard} />
+        <Stack.Screen name="LeaderBoardUserDetails" component={LeaderBoarduserDetails} />
 
       </Stack.Navigator>
     </SafeAreaProvider>
