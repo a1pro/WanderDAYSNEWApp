@@ -123,6 +123,19 @@ export const styles = StyleSheet.create({
           backgroundColor:'#ffff',
           padding:5,
           borderRadius:10 
+        },
+        daysWrapper:{
+            backgroundColor: '#FFFFFF',
+            borderRadius: 10,
+            width: 60,
+            height: 60,
+            justifyContent: 'center',
+        },
+        daystext:{
+            textAlign: 'center',
+                color: '#1D2B64',
+                fontSize: 20,
+                fontWeight: '600',
         }
 
 })

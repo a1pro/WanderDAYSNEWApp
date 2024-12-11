@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, StyleSheet, FlatList, Image, Alert} from 'react-native';
+import {View, Text, StyleSheet, FlatList, Image, Alert, TouchableOpacity} from 'react-native';
 import Headerscreen from '../component/Headerscreen';
 import {useNavigation} from '@react-navigation/native';
 import axios from 'axios';
@@ -28,7 +28,7 @@ const LeaderBoard = () => {
 
       if (res.data.success === true) {
         console.log('LeaderBoard', res.data.message);
-
+        console.log("Leader",res.data.data)
         // Sort the leaderboard data by total_day_spend in descending order
         const sortedLeaderboard = res.data.data.sort(
           (a, b) => b.total_day_spend - a.total_day_spend,
@@ -51,7 +51,15 @@ const LeaderBoard = () => {
     const userTotalDays = item.total_day_spend || 0;
 
     return (
-      <View style={[styles.row, isTopThree && styles.highlightRow]}>
+      <TouchableOpacity onPress={() => navigation.navigate('LeaderBoardUserDetails', {
+        userId: index,      
+        userName: userName,     
+        profilePic: item.profile_pic, 
+        totalDays: userTotalDays,
+        trips:item.number_of_trips,
+        country:item.number_of_country
+      })}>
+        <View style={[styles.row, isTopThree && styles.highlightRow]}>
         <View style={styles.rankContainer}>
           <Text style={styles.rankText}>{index + 1}</Text>
         </View>
@@ -61,6 +69,7 @@ const LeaderBoard = () => {
         <Text style={styles.nameText}>{userName}</Text>
         <Text style={styles.daysText}>Total Days: {userTotalDays}</Text>
       </View>
+      </TouchableOpacity>
     );
   };
 
@@ -74,38 +83,49 @@ const LeaderBoard = () => {
 
       {/* Top 3 Section */}
       <View style={styles.topThreeContainer}>
-        {leaderboard
-          .slice(0, 3) // Get the first 3 items after sorting
-          .map((item, index) => {
-            const userName = item.full_name || 'Anonymous';
-            const userTotalDays = item.total_day_spend || 0;
+        {leaderboard.slice(0, 3).map((item, index) => {
+          const userName = item.full_name || 'Anonymous';
+          const userTotalDays = item.total_day_spend || 0;
 
-            return (
-              <View key={item.user_id} style={styles.topThreeItem}>
-                <View style={{position:'relative'}}>
-                  <View style={{position: 'absolute', bottom: -10,left:15, zIndex: 99,width:30,height:30,backgroundColor:'#0288D1',borderRadius:'100%',justifyContent:'center'}}>
-                    <Text style={styles.topThreeRank}>{index + 1}</Text>
-                  </View>
-                  <Image
-                    source={{uri: item.profile_pic}}
-                    style={styles.topThreeAvatar}
-                  />
+          return (
+            <View key={item.user_id} style={styles.topThreeItem}>
+              <View style={{position: 'relative'}}>
+                <View
+                  style={{
+                    position: 'absolute',
+                    bottom: -10,
+                    left: 15,
+                    zIndex: 99,
+                    width: 30,
+                    height: 30,
+                    backgroundColor: '#0288D1',
+                    borderRadius: '100%',
+                    justifyContent: 'center',
+                  }}>
+                  <Text style={styles.topThreeRank}>{index + 1}</Text>
                 </View>
-
-                <Text style={styles.topThreeName}>{userName}</Text>
-                <Text style={styles.topThreeDays}>Days: {userTotalDays}</Text>
+                <Image
+                  source={{uri: item.profile_pic}}
+                  style={styles.topThreeAvatar}
+                />
               </View>
-            );
-          })}
+
+              <Text style={styles.topThreeName}>{userName}</Text>
+              <Text style={styles.topThreeDays}>Days: {userTotalDays}</Text>
+            </View>
+          );
+        })}
       </View>
 
       {/* Full Leaderboard */}
-      <View style={styles.flatlist}>
+      <View style={styles.flatlistContainer}>
         <FlatList
           data={leaderboard}
           renderItem={renderItem}
-          keyExtractor={item => item.user_id.toString()} // Ensure that the keyExtractor is using a valid unique key
+          keyExtractor={item => item.user_id.toString()}
           contentContainerStyle={styles.listContainer}
+          scrollEnabled={true}
+          ListEmptyComponent={<Text>No data available</Text>}
         />
       </View>
     </View>
@@ -139,13 +159,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#ffff',
-    textAlign:'center'
+    textAlign: 'center',
   },
   topThreeName: {
     marginTop: 5,
     fontSize: 14,
     fontWeight: '600',
-    marginTop:10
+    marginTop: 10,
   },
   topThreeDays: {
     fontSize: 12,
@@ -153,9 +173,10 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   listContainer: {
-    marginTop: 10,
+    paddingBottom: 10,
   },
-  flatlist: {
+  flatlistContainer: {
+    flex: 1,
     backgroundColor: '#0288D14D',
     borderTopRightRadius: 30,
     borderTopLeftRadius: 30,
